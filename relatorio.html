@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Cédulas</title>
+    <link rel="stylesheet" href="styles.css">
+
+        <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .printer-status {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: #6c757d;
+        }
+        
+        .status-indicator.connected {
+            background-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.disconnected {
+            background-color: #dc3545;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+        }
+        
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,193,7,0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .report-preview {
+            background-color: #fff;
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            min-height: 200px;
+        }
+        
+        .report-preview h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .notification.success {
+            background-color: #28a745;
+        }
+        
+        .notification.error {
+            background-color: #dc3545;
+        }
+        
+        .notification.info {
+            background-color: #17a2b8;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .report-content {
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>📋 Relatório Diário de Cédulas</h1>
+            <div class="date-info">
+                <span id="currentDate"></span>
+                <button onclick="window.location.href='index.html'" class="btn-logout">Sair</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="currency-section">
+                <h2>🇧🇷 Reais (BRL)</h2>
+                <div class="notes-grid" id="brlNotes"></div>
+            </div>
+
+            <div class="currency-section">
+                <h2>🇦🇷 Pesos Argentinos (ARS)</h2>
+                <div class="notes-grid" id="arsNotes"></div>
+            </div>
+
+            <div class="totals-section">
+                <div class="total-card">
+                    <h3>Total em Reais</h3>
+                    <div class="total-amount" id="totalBRL">R$ 0,00</div>
+                </div>
+                <div class="total-card">
+                    <h3>Total em Pesos</h3>
+                    <div class="total-amount" id="totalARS">ARS 0,00</div>
+                </div>
+                <div class="total-card">
+                    <h3>Total Geral (BRL)</h3>
+                    <div class="total-amount" id="totalGeral">R$ 0,00</div>
+                    <small>Convertido pela cotação do dia</small>
+                </div>
+            </div>
+
+            <div class="conversion-section">
+                <h3>💰 Conversão de Moeda</h3>
+                <div class="conversion-box">
+                    <label>Cotação do Peso Argentino (ARS) para Real (BRL):</label>
+                    <input 
+                        type="number" 
+                        id="exchangeRate" 
+                        step="0.0001" 
+                        value="0.0034"
+                        min="0"
+                        placeholder="Ex: 0.0058"
+                    >
+                    <small>1 ARS = <span id="rateDisplay">0,0034</span> BRL</small>
+                </div>
+            </div>
+
+            <div class="actions-section">
+                <button onclick="calcularTotais()" class="btn-calculate">
+                    🔄 Calcular Totais
+                </button>
+                <button onclick="gerarPDF()" class="btn-print">
+                    🖨️ Gerar PDF
+                </button>
+                <button onclick="limparCampos()" class="btn-clear">
+                    🗑️ Limpar Tudo
+                </button>
+            </div>
+
+            <!-- No seu arquivo relatorio.html, adicione um botão -->
+            <button onclick="window.open('impressao.html', '_blank')">
+                🖨️ Abrir Painel de Impressão
+            </button>
+
+            <div class="summary-section">
+                <h3>📊 Resumo Detalhado</h3>
+                <div id="detailedSummary"></div>
+            </div>
+        </main>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🖨️ Sistema de Impressão D-Printer DR800</h1>
+            <p class="subtitle">Impressão direta de relatórios de caixa</p>
+        </div>
+        
+        <div class="printer-status">
+            <h3>Status da Impressora</h3>
+            <div id="printerStatus">
+                <span class="status-indicator disconnected"></span>
+                <span>Impressora não conectada</span>
+            </div>
+            <div id="printerInfo" style="margin-top: 10px; font-size: 14px; color: #666;">
+                Conecte uma impressora D-Printer DR800 via USB
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="detectarImpressora()">
+                🔍 Detectar Impressora
+            </button>
+            
+            <button class="btn btn-success" id="btnImprimir" onclick="imprimirRelatorio()" disabled>
+                🖨️ Imprimir Relatório
+            </button>
+            
+            <button class="btn btn-warning" onclick="gerarPDF()">
+                📄 Gerar PDF
+            </button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processando impressão...</p>
+        </div>
+        
+        <div class="report-preview">
+            <h3>📋 Prévia do Relatório</h3>
+            <div class="report-content" id="reportPreview">
+                O relatório será gerado automaticamente após a impressão...
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+
+
+
+    <!-- Biblioteca para geração de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    
+    <script src="script.js"></script>
+
+        <script>
+        // Variáveis globais
+        let printer = null;
+        let printerConnected = false;
+        
+        // Dados das cédulas (exemplo)
+        const cedulasBRL = [
+            { valor: 200, label: "R$ 200", symbol: "R$" },
+            { valor: 100, label: "R$ 100", symbol: "R$" },
+            { valor: 50, label: "R$ 50", symbol: "R$" },
+            { valor: 20, label: "R$ 20", symbol: "R$" },
+            { valor: 10, label: "R$ 10", symbol: "R$" },
+            { valor: 5, label: "R$ 5", symbol: "R$" },
+            { valor: 2, label: "R$ 2", symbol: "R$" },
+            { valor: 1, label: "R$ 1", symbol: "R$" },
+        ];
+        
+        const cedulasARS = [
+            { valor: 20000, label: "$20.000", symbol: "$" },
+            { valor: 10000, label: "$10.000", symbol: "$" },
+            { valor: 2000, label: "$2000", symbol: "$" },
+            { valor: 1000, label: "$1000", symbol: "$" },
+            { valor: 500, label: "$500", symbol: "$" },
+            { valor: 200, label: "$200", symbol: "$" },
+            { valor: 100, label: "$100", symbol: "$" },
+            { valor: 50, label: "$50", symbol: "$" },
+        ];
+        
+        // IDs das impressoras D-Printer DR800 (USB)
+        const DPRINTER_IDS = [
+            { vendorId: 0x0483, productId: 0x5740 }, // Exemplo de ID, ajuste conforme sua impressora
+            { vendorId: 0x0483, productId: 0x5743 },
+            { vendorId: 0x0416, productId: 0x5011 }, // Outro ID comum
+        ];
+        
+        // Notificação
+        function showNotification(message, type = 'info', duration = 3000) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+        
+        // Atualizar status da impressora
+        function atualizarStatusPrinter(conectada, info = '') {
+            printerConnected = conectada;
+            const statusElement = document.getElementById('printerStatus');
+            const infoElement = document.getElementById('printerInfo');
+            const btnImprimir = document.getElementById('btnImprimir');
+            
+            if (conectada) {
+                statusElement.innerHTML = `
+                    <span class="status-indicator connected"></span>
+                    <span style="color: #28a745; font-weight: bold;">Impressora conectada</span>
+                `;
+                infoElement.textContent = info || 'D-Printer DR800 pronta para uso';
+                btnImprimir.disabled = false;
+            } else {
+                statusElement.innerHTML = `
+                    <span class="status-indicator disconnected"></span>
+                    <span>Impressora não conectada</span>
+                `;
+                infoElement.textContent = 'Conecte uma impressora D-Printer DR800 via USB';
+                btnImprimir.disabled = true;
+            }
+        }
+        
+        // Detectar impressora via WebUSB
+        async function detectarImpressora() {
+            try {
+                // Solicitar acesso à impressora USB
+                printer = await navigator.usb.requestDevice({ 
+                    filters: DPRINTER_IDS
+                });
+                
+                if (!printer) {
+                    showNotification('Nenhuma impressora D-Printer encontrada', 'error');
+                    return;
+                }
+                
+                // Conectar à impressora
+                await printer.open();
+                await printer.selectConfiguration(1);
+                await printer.claimInterface(0);
+                
+                // Obter informações da impressora
+                const vendorName = printer.vendorName || 'Fabricante Desconhecido';
+                const productName = printer.productName || 'D-Printer DR800';
+                
+                atualizarStatusPrinter(true, `${productName} - ${vendorName}`);
+                showNotification('Impressora conectada com sucesso!', 'success');
+                
+                // Atualizar prévia do relatório
+                atualizarPreviaRelatorio();
+                
+            } catch (error) {
+                console.error('Erro ao conectar impressora:', error);
+                
+                // Fallback: verificar se há impressoras disponíveis
+                const devices = await navigator.usb.getDevices();
+                const dprinter = devices.find(device => 
+                    DPRINTER_IDS.some(id => 
+                        device.vendorId === id.vendorId && 
+                        device.productId === id.productId
+                    )
+                );
+                
+                if (dprinter) {
+                    printer = dprinter;
+                    atualizarStatusPrinter(true, 'D-Printer DR800 (reconectada)');
+                    showNotification('Usando impressora já conectada', 'info');
+                } else {
+                    atualizarStatusPrinter(false);
+                    showNotification('Conecte uma impressora D-Printer DR800', 'error');
+                }
+            }
+        }
+        
+        // Enviar comandos para a impressora
+        async function enviarComandoImpressora(data) {
+            if (!printer || !printerConnected) {
+                showNotification('Conecte a impressora primeiro', 'error');
+                return false;
+            }
+            
+            try {
+                // Converter dados para ArrayBuffer
+                const encoder = new TextEncoder();
+                const buffer = encoder.encode(data);
+                
+                // Enviar dados para a impressora (endpoint 2 para saída)
+                await printer.transferOut(2, buffer);
+                return true;
+            } catch (error) {
+                console.error('Erro ao enviar para impressora:', error);
+                showNotification('Erro na comunicação com a impressora', 'error');
+                return false;
+            }
+        }
+        
+        // Comandos ESC/POS para impressora térmica
+        const ESC = '\x1B';
+        const GS = '\x1D';
+        
+        const comandosImpressora = {
+            // Inicialização
+            init: ESC + '@',
+            
+            // Formatação de texto
+            alignLeft: ESC + 'a' + '\x00',
+            alignCenter: ESC + 'a' + '\x01',
+            alignRight: ESC + 'a' + '\x02',
+            
+            // Tamanho da fonte
+            fontNormal: ESC + '!' + '\x00',
+            fontDoubleHeight: ESC + '!' + '\x10',
+            fontDoubleWidth: ESC + '!' + '\x20',
+            fontDoubleBoth: ESC + '!' + '\x30',
+            fontBoldOn: ESC + 'E' + '\x01',
+            fontBoldOff: ESC + 'E' + '\x00',
+            
+            // Corte de papel
+            cutPaper: GS + 'V' + '\x41' + '\x00',
+            cutPartial: GS + 'V' + '\x41' + '\x01',
+            
+            // Avançar linha
+            lineFeed: '\x0A',
+            multipleLineFeed: (n) => ESC + 'd' + String.fromCharCode(n),
+            
+            // Abrir gaveta de dinheiro
+            openCashDrawer: ESC + 'p' + '\x00' + '\x10' + '\x10',
+        };
+        
+        // Gerar relatório para impressão térmica
+        function gerarRelatorioTérmico() {
+            const dataAtual = new Date().toLocaleDateString('pt-BR');
+            const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            let relatorio = '';
+            
+            // Inicializar impressora
+            relatorio += comandosImpressora.init;
+            
+            // Cabeçalho
+            relatorio += comandosImpressora.alignCenter;
+            relatorio += comandosImpressora.fontDoubleBoth;
+            relatorio += comandosImpressora.fontBoldOn;
+            relatorio += 'RELATÓRIO DE CAIXA\n';
+            relatorio += comandosImpressora.fontBoldOff;
+            relatorio += comandosImpressora.fontNormal;
+            relatorio += `Data: ${dataAtual} ${horaAtual}\n\n`;
+            
+            // Linha separadora
+            relatorio += '================================\n';
+            
+            // Seção Reais (BRL)
+            relatorio += comandosImpressora.alignLeft;
+            relatorio += comandosImpressora.fontBoldOn;
+            relatorio += 'REAIS (BRL):\n';
+            relatorio += comandosImpressora.fontBoldOff;
+            
+            let totalBRL = 0;
+            cedulasBRL.forEach(cedula => {
+                const qtd = Math.floor(Math.random() * 5); // Exemplo: quantidade aleatória
+                if (qtd > 0) {
+                    const subtotal = cedula.valor * qtd;
+                    totalBRL += subtotal;
+                    relatorio += `R$ ${cedula.valor.toString().padEnd(6)} x${qtd.toString().padStart(3)} = R$ ${subtotal.toFixed(2).padStart(8)}\n`;
+                }
+            });
+            
+            relatorio += `TOTAL BRL: R$ ${totalBRL.toFixed(2)}\n\n`;
+            
+            // Seção Pesos (ARS)
+            relatorio += comandosImpressora.fontBoldOn;
+            relatorio += 'PESOS (ARS):\n';
+            relatorio += comandosImpressora.fontBoldOff;
+            
+            let totalARS = 0;
+            cedulasARS.forEach(cedula => {
+                const qtd = Math.floor(Math.random() * 3); // Exemplo: quantidade aleatória
+                if (qtd > 0) {
+                    const subtotal = cedula.valor * qtd;
+                    totalARS += subtotal;
+                    relatorio += `$ ${cedula.valor.toString().padEnd(6)} x${qtd.toString().padStart(3)} = $ ${subtotal.toFixed(2).padStart(8)}\n`;
+                }
+            });
+            
+            relatorio += `TOTAL ARS: $ ${totalARS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n`;
+            
+            // Cálculos de conversão
+            const cotacao = 0.0034;
+            const totalConvertido = totalARS * cotacao;
+            const totalGeral = totalBRL + totalConvertido;
+            
+            relatorio += comandosImpressora.alignCenter;
+            relatorio += '--------------------------------\n';
+            relatorio += comandosImpressora.fontBoldOn;
+            relatorio += 'RESUMO DE CONVERSÃO\n';
+            relatorio += comandosImpressora.fontBoldOff;
+            relatorio += `Cotação: 1 ARS = ${cotacao.toFixed(4)} BRL\n`;
+            relatorio += `ARS Convertido: R$ ${totalConvertido.toFixed(2)}\n`;
+            relatorio += comandosImpressora.fontDoubleHeight;
+            relatorio += comandosImpressora.fontBoldOn;
+            relatorio += `TOTAL GERAL: R$ ${totalGeral.toFixed(2)}\n`;
+            relatorio += comandosImpressora.fontNormal;
+            
+            // Rodapé
+            relatorio += comandosImpressora.alignCenter;
+            relatorio += comandosImpressora.multipleLineFeed(3);
+            relatorio += '--- ** ---\n';
+            relatorio += 'Sistema de Controle de Caixa\n';
+            relatorio += 'Relatório automático\n';
+            
+            // Cortar papel
+            relatorio += comandosImpressora.multipleLineFeed(5);
+            relatorio += comandosImpressora.cutPaper;
+            
+            return relatorio;
+        }
+        
+        // Atualizar prévia do relatório
+        function atualizarPreviaRelatorio() {
+            const preview = document.getElementById('reportPreview');
+            const relatorio = gerarRelatorioTérmico();
+            
+            // Remover códigos de controle para exibição
+            const previewText = relatorio
+                .replace(/\x1B/g, '[ESC]')
+                .replace(/\x1D/g, '[GS]')
+                .replace(/\x0A/g, '\n')
+                .replace(/\x00/g, '[NUL]');
+            
+            preview.textContent = previewText;
+        }
+        
+        // Imprimir relatório
+        async function imprimirRelatorio() {
+            if (!printerConnected) {
+                showNotification('Conecte a impressora primeiro', 'error');
+                return;
+            }
+            
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            
+            try {
+                // Gerar conteúdo do relatório
+                const relatorio = gerarRelatorioTérmico();
+                
+                // Enviar para impressora
+                const success = await enviarComandoImpressora(relatorio);
+                
+                if (success) {
+                    showNotification('Relatório impresso com sucesso!', 'success');
+                    
+                    // Abrir gaveta de dinheiro (opcional)
+                    setTimeout(() => {
+                        enviarComandoImpressora(comandosImpressora.openCashDrawer);
+                    }, 500);
+                }
+                
+            } catch (error) {
+                console.error('Erro na impressão:', error);
+                showNotification('Erro ao imprimir relatório', 'error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Gerar PDF (função original)
+        function gerarPDF() {
+            if (typeof window.jspdf === 'undefined') {
+                alert('Biblioteca de PDF não carregada!');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Data e hora
+            const dataAtual = new Date().toLocaleDateString('pt-BR');
+            const horaAtual = new Date().toLocaleTimeString('pt-BR');
+            
+            // Título
+            doc.setFontSize(20);
+            doc.text("Relatório Diário de Cédulas", 105, 15, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.text(`Data: ${dataAtual} - Hora: ${horaAtual}`, 105, 25, { align: 'center' });
+            
+            let yPos = 40;
+            
+            // Cédulas BRL
+            doc.setFontSize(16);
+            doc.text("Cédulas em Reais (BRL):", 14, yPos);
+            yPos += 10;
+            
+            doc.autoTable({
+                startY: yPos,
+                head: [['Cédula', 'Quantidade', 'Valor Unitário', 'Subtotal']],
+                body: cedulasBRL.map(cedula => {
+                    const qtd = Math.floor(Math.random() * 5);
+                    return [
+                        `R$ ${cedula.valor}`,
+                        qtd,
+                        `R$ ${cedula.valor.toFixed(2)}`,
+                        `R$ ${(qtd * cedula.valor).toFixed(2)}`
+                    ];
+                })
+            });
+            
+            yPos = doc.lastAutoTable.finalY + 15;
+            
+            // Cédulas ARS
+            doc.setFontSize(16);
+            doc.text("Cédulas em Pesos Argentinos (ARS):", 14, yPos);
+            yPos += 10;
+            
+            doc.autoTable({
+                startY: yPos,
+                head: [['Cédula', 'Quantidade', 'Valor Unitário', 'Subtotal']],
+                body: cedulasARS.map(cedula => {
+                    const qtd = Math.floor(Math.random() * 3);
+                    return [
+                        `$ ${cedula.valor}`,
+                        qtd,
+                        `$ ${cedula.valor.toFixed(2)}`,
+                        `$ ${(qtd * cedula.valor).toFixed(2)}`
+                    ];
+                })
+            });
+            
+            yPos = doc.lastAutoTable.finalY + 20;
+            
+            // Totais
+            const totalBRL = 200.00;
+            const totalARS = 20000.00;
+            const cotacao = 0.0034;
+            const totalGeral = totalBRL + (totalARS * cotacao);
+            
+            doc.setFontSize(14);
+            doc.text("RESUMO FINAL", 105, yPos, { align: 'center' });
+            yPos += 15;
+            
+            doc.setFontSize(12);
+            doc.text(`Total em Reais: R$ ${totalBRL.toFixed(2).replace('.', ',')}`, 14, yPos);
+            yPos += 10;
+            doc.text(`Total em Pesos: $ ${totalARS.toFixed(2).replace('.', ',')}`, 14, yPos);
+            yPos += 10;
+            doc.text(`Cotação utilizada: 1 ARS = ${cotacao.toFixed(4)} BRL`, 14, yPos);
+            yPos += 10;
+            doc.text(`Total convertido: R$ ${(totalARS * cotacao).toFixed(2).replace('.', ',')}`, 14, yPos);
+            yPos += 10;
+            doc.text(`TOTAL GERAL: R$ ${totalGeral.toFixed(2).replace('.', ',')}`, 14, yPos);
+            
+            // Rodapé
+            doc.setFontSize(10);
+            doc.text("Relatório gerado automaticamente - Sistema de Controle de Caixa", 105, 280, { align: 'center' });
+            
+            // Salvar PDF
+            doc.save('relatorio-cedulas-${dataAtual.replace(/\//g, '-')}.pdf');
+            
+            showNotification('PDF gerado com sucesso!', 'success');
+        }
+        
+        // Verificar se há impressoras já conectadas ao carregar a página
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Verificar se WebUSB está disponível
+                if (!navigator.usb) {
+                    showNotification('Seu navegador não suporta WebUSB. Use Chrome ou Edge.', 'error');
+                    return;
+                }
+                
+                // Verificar permissões existentes
+                const devices = await navigator.usb.getDevices();
+                const dprinter = devices.find(device => 
+                    DPRINTER_IDS.some(id => 
+                        device.vendorId === id.vendorId && 
+                        device.productId === id.productId
+                    )
+                );
+                
+                if (dprinter) {
+                    printer = dprinter;
+                    atualizarStatusPrinter(true, 'D-Printer DR800 (já autorizada)');
+                    showNotification('Impressora detectada automaticamente', 'info');
+                    atualizarPreviaRelatorio();
+                }
+                
+            } catch (error) {
+                console.error('Erro ao verificar impressoras:', error);
+            }
+            
+            // Atualizar prévia inicial
+            atualizarPreviaRelatorio();
+        });
+        
+        // Função para buscar dados reais dos inputs (se existirem)
+        function buscarDadosReais() {
+            // Esta função deve ser adaptada para buscar dados reais do seu sistema
+            // Exemplo: buscar valores dos inputs do formulário
+            
+            const dados = {
+                reais: {},
+                pesos: {},
+                cotacao: 0.0034
+            };
+            
+            cedulasBRL.forEach(cedula => {
+                const input = document.querySelector(`input[data-valor="${cedula.valor}"][data-symbol="R$"]`);
+                if (input) {
+                    dados.reais[cedula.valor] = parseInt(input.value) || 0;
+                }
+            });
+            
+            cedulasARS.forEach(cedula => {
+                const input = document.querySelector(`input[data-valor="${cedula.valor}"][data-symbol="$"]`);
+                if (input) {
+                    dados.pesos[cedula.valor] = parseInt(input.value) || 0;
+                }
+            });
+            
+            return dados;
+        }
+    </script>
+    
+</body>
+</html>
+
+

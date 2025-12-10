@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Diário de Cédulas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h1>Relatório Diário</h1>
+            <p class="subtitle">Controle de Cédulas do Caixa</p>
+            
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="codigo">Código de Acesso</label>
+                    <input 
+                        type="password" 
+                        id="codigo" 
+                        placeholder="Digite seu código"
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="btn-login">Acessar</button>
+                
+                <div class="info-box">
+                    <p>⚠️ Código padrão inicial: <strong>123456</strong></p>
+                    <p>Você pode alterar no arquivo server.js</p>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
